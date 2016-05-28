@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+	
+	  <!-- TODO -->
+
+  <!-- start mjpeg-server -->
+  <!--node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" respawn="false"/-->
+
+  <!-- start Ros Web Tools rosbridge_server -->   
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/> 
+
+  <!-- start summit_xl_controller node -->
+  <!--node pkg="image_transport" type="republish" name="republish" args="compressed in:=/axis1 out:=/axisprueba" output="screen"/-->
+
+  
+  <!-- /home/eliot/catkin_ws/install/lib/python2.7/dist-packages/summit_xl_web/start_recording_server.py -->
+  <node pkg="summit_xl_web" type="start_recording_server.py" name="start_recording_server" output="screen" respawn="false"/>
+  
+  
+  <!-- image transport needed to save the image -->
+  <!--node pkg="image_transport" type="republish" name="republish" args="compressed in:=/axis1 raw out:=/axis1"/-->
+
+</launch>
+
