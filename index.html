@@ -14,122 +14,88 @@
 	<script type="text/javascript" src="javascript_libraries/roslib.min.js"></script>
 	<script type="text/javascript" src="javascript_libraries/jquery-2.1.0.min.js"></script>
 	<script type="text/javascript" src="javascript_libraries/jquery-ui-1.10.4.min.js"></script>
-	<script type="text/javascript" src="javascript_libraries/Ros3D.js"></script>
 	<script type="text/javascript" src="javascript_libraries/three.js"></script>
-	<script type="text/javascript" src="javascript_libraries/ColladaLoader2.js"></script>
-	   
-  <script type="text/javascript" src="index.js"></script>
+	<script src="http://cdn.robotwebtools.org/threejs/current/three.js"></script>
+	<script src="http://cdn.robotwebtools.org/threejs/current/ColladaLoader.js"></script>
+	<script src="http://cdn.robotwebtools.org/threejs/current/STLLoader.js"></script>
+	<script src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.js"></script>
+	<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+	<script src="http://cdn.robotwebtools.org/EaselJS/current/easeljs.min.js"></script>
+	<script src="./js/ros3d.js"></script>
+	<script src="./js/nav2d.js"></script>
+	<script src="./js/roslib.js"></script>
+	<script src="./js/ros2d.js"></script>
+	  
+    <script type="text/javascript" src="index.js"></script>
+    
+
     
   
 </head>
 
 <body>
-    <div id="tabs" style="height: auto;">
-		 <ul>
-			<a href="http://www.robotnik.es/en/"><img width="200" src="robotnik.png" style="float: left; border:2px; margin:0px 0px 0px 0px"></a>
-			<li><a href="#tabs-3">Robot Status</a></li>
-			<li><a href="#tabs-1">Camera</a></li>
-			<li><a href="#tabs-2">Configuration</a></li>
+	<div id="tabs" style="height: auto;">
+		<ul>
+			<a href="http://www.robotnik.eu/"><img width="200" src="robotnik.png" style="float: left; border:2px; margin:0px 0px 0px 0px"></a>
+			<li><a href="#tabs-1">Mapping</a></li>
+			<li><a href="#tabs-2">Navigation</a></li>
+			<li><a href="#tabs-3">Config</a></li>
 		</ul>
 			
 		
-		<!-- CAMERA TAB -->
-		<!----------------------->
-		
+		<!-- MAPPING TAB -->
 		<div id="tabs-1" style="height:100em">
-			<!--div style="position: absolute; left: 1100px; top: 700px; "> 
-			 <table border="0">
-			 <tr><th />
-				 <th><input type="button" Value="+" onClick="move_cam_top()" class = "btn btn-danger"/></th>
-				 </tr>
-			 <tr><p/><tr/>
-			 <tr>
-				<td><input type="button" Value="- " onClick="move_cam_left()" class = "btn btn-danger"/></td>
-				<td><input type="button" Value="H" onClick="initial()" class = "btn btn-danger" /></td>
-				<td><input type="button" Value="+" onClick="move_cam_right()" class = "btn btn-danger"/></td>
-			 </tr>
-			 <tr>
-				<th/>
-				<td><input type="button" Value="- " onClick="move_cam_dowm()" class = "btn btn-danger" /> </td>
-			 </tr>
-			 <tr><th/>
-			 </table>
-			 </div-->
-			<div style="float:left">
-				<img WIDTH=600 HEIGHT=600 src="http://192.168.0.185/axis-cgi/mjpg/video.cgi?videocodec=h264&streamprofile=Balanced">
-			</div>
-			<!--
-			<div >  
-			<input type="button" Value="Disable joystick" onClick="stopJo()" class = "btn btn-danger"/>
-			<input type="button" Value="Enable joystick" onClick="startJo()" class = "btn btn-danger"/>
-			<br></br>
-			<input type="button" Value="position1" onClick="pos1()" class = "btn btn-danger"/> 		
-			<input type="button" Value="position2" onClick="pos2()" class = "btn btn-danger"/>	
-			<input type="button" Value="position3" onClick="pos3()" class = "btn btn-danger"/>   	
-			<input type="button" Value="position4" onClick="pos4()" class = "btn btn-danger"/>    	
-			<br></br>
-			</div>
-			-->
 		
+			<div id="navigationgrid" style="float:left"></div>
+		  
+			<div style="float:right"> 
+				<p>Robot Controller Node
+				<input type="button" Value="Start Recording" onClick="startRecording()" class = "btn btn-danger"/>
+				<input type="button" Value="Stop Recording" onClick="stopRecording()" class = "btn btn-danger"/></p>
+				<p>Joystick Node
+				<input type="button" Value="Start Recording" onClick="startRecording()" class = "btn btn-danger"/>
+				<input type="button" Value="Stop Recording" onClick="stopRecording()" class = "btn btn-danger"/></p>
+				<p>Gmapping Node
+				<input type="button" Value="Start Recording" onClick="startRecording()" class = "btn btn-danger"/>
+				<input type="button" Value="Stop Recording" onClick="stopRecording()" class = "btn btn-danger"/></p>
+				<p>Move Base
+				<input type="button" Value="Start Recording" onClick="startRecording()" class = "btn btn-danger"/>
+				<input type="button" Value="Stop Recording" onClick="stopRecording()" class = "btn btn-danger"/></p>
 
-		   <!--div>
-			  <iframe src="file:///home/summit/Sources/hydro/summit_xl_robot/summit_xl_web/urdf.html" width="600" height="500" align="center" align="top" scrolling="no" frameborder="no">
-		  </div-->
-		  
-		  <div style="float:left">  
-			<input type="button" Value="Start Recording" onClick="startRecording()" class = "btn btn-danger"/>
-			<input type="button" Value="Stop Recording" onClick="stopRecording()" class = "btn btn-danger"/>
-			<br>
-			<span id="videoStatus"></span>
-		
-			<!-- Button to save image, NEEDS image transport node in summit_xl_web.launch (commented) -->
-			<!--input type="button" Value="Save Image" onClick="saveImage()" class = "btn btn-danger"/-->
-			<br>
-			<span id="imageStatus"></span>
-			
-			<h3>Zoom</h3>
-		    <div id="slider_zoom" style="width: 25em; float:left; margin-left: 1em;"></div>
-		  
-		  
-		    <h3>Camera Movement</h3>
-		    <div > 
-			 <table border="0">
-			 <tr><th />
-				 <th><input type="button" Value="+" onClick="move_cam_top()" class = "btn btn-danger"/></th>
+				<h3>Screen Pad</h3>
+			    
+			    <div> 
+				 <table border="0">
+				 <tr><th />
+					 <th><input type="button" Value="UP" onClick="move_cam_top()" class = "btn btn-danger"/></th>
+					 </tr>
+				 <tr><p/><tr/>
+				 <tr>
+					<td><input type="button" Value="LEFT" onClick="move_cam_left()" class = "btn btn-danger"/></td>
+					<td><input type="button" Value="STOP" onClick="initial()" class = "btn btn-danger" /></td>
+					<td><input type="button" Value="RIGHT" onClick="move_cam_right()" class = "btn btn-danger"/></td>
 				 </tr>
-			 <tr><p/><tr/>
-			 <tr>
-				<td><input type="button" Value="- " onClick="move_cam_left()" class = "btn btn-danger"/></td>
-				<td><input type="button" Value="H" onClick="initial()" class = "btn btn-danger" /></td>
-				<td><input type="button" Value="+" onClick="move_cam_right()" class = "btn btn-danger"/></td>
-			 </tr>
-			 <tr>
-				<th/>
-				<td><input type="button" Value="- " onClick="move_cam_dowm()" class = "btn btn-danger" /> </td>
-			 </tr>
-			 <tr><th/>
-			 </table>
-			 </div>
-			
-			
-		  </div>
+				 <tr>
+					<th/>
+					<td><input type="button" Value="DOWN" onClick="move_cam_dowm()" class = "btn btn-danger" /> </td>
+				 </tr>
+				 <tr><th/>
+				 </table>
+				 
+				 </div>
+			  
+		 	</div>
   
-		  
 		</div>
 		
 		
-		<!-- ROBOT STATE TAB -->
-		<!----------------------->
-		
-		
-		<div id="tabs-3">
+		<!-- NAVIGATION TAB -->
+				
+		<div id="tabs-2">
 		
 		<div id = "sensortopic">
 		  
-			  
-			  
-			  <!--div id="yaw_angle">Angulo inclinacion = <span></span></div-->
-			  <br>
+			<br>
 			  <table border="0px">
 				  <tr >
 					<td>	  
@@ -163,7 +129,7 @@
 			  <br>
 			  
 			  <h3>Battery</h3>
-			  <div id="progressbar_battery" style="width: 20em; float:left; margin-left:1em" class="ui-progressbar3" ></div><br>
+			  <div id="progressbar_battery" style="width: 20em; float:left; margin-left:1em" class="ui-progressbar3"></div><br>
 			  &nbsp;&nbsp;
 			  0% &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 			  25% &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -254,7 +220,7 @@
 				  </tr>
 				  <tr>
 					<td style="text-align:center">
-						<div id="back_left_wheel_status"> <span></span></div>
+						<div id="back_left_wheel_status"> <	></span></div>
 					</td>
 					<td>
 						<input type="button" Value="Flags" class = "btn btn-danger" id="button_blw"/>
@@ -270,12 +236,7 @@
 		  
 		  <br>
 		  		  
-		  <!--input type="button" Value="Flags front left wheel" class = "btn btn-danger" id="button_flw"/>
-		  <input type="button" Value="Flags front right wheel" class = "btn btn-danger" id="button_frw"/>
-		  <br><br>
-		  <input type="button" Value="Flags back left wheel" class = "btn btn-danger" id="button_blw"/>
-		  <input type="button" Value="Flags back right wheel" class = "btn btn-danger" id="button_brw"/-->
-		  
+		  	  
 		  <div id="dialog_flw" title="Flags front left wheel">
 				Flags info: <br>
 				Flag is off <br>
@@ -343,9 +304,8 @@
 		
 		
 		<!-- CONFIGURATION TAB -->
-		<!----------------------->
-		
-		<div id="tabs-2">
+			
+		<div id="tabs-3">
 			
 			<br><br>
 			
@@ -448,4 +408,10 @@
 
 
 </body>
+
+ <footer>
+  <p>Robotnik Automation SLL</p>
+  <p>Conctact: <a href="mailto:info@robotnik.es">
+  Robotnik</a>.</p>
+</footer> 
 </html>
