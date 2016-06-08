@@ -32,7 +32,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
 import rospy
+import rospkg
 import rosparam
 import roslaunch
 
@@ -77,38 +80,56 @@ class MapNavManager:
 		self.msg_state = State()
 		# Timer to publish state
 		self.publish_state_timer = 1
-
-		self.start_slam_gmapping = False
-		self.start_amcl = False
+		
+		
+		# Flags para iniciar procesos
+		self.run_slam_gmapping = False
+		self.run_amcl = False
+		self.run_move_base = False
+		'''
 		self.start_robot_ctrller = False
-		self.start_move_base = False
 		self.start_teleop = False
 		self.start_map_server = False
-
+		'''
+		# Flags para parar procesos
+		self.stop_slam_gmapping = False
+		self.stop_amcl = False
+		self.stop_move_base = False
+		
+		#Status que se rellena con el process.is_alive
 		self.is_slam_gmapping = False
 		self.is_amcl = False
 		self.is_map_server = False
 		self.is_move_base = False
 		self.is_robot_ctrllr = False
 		self.is_teleop = False
-
-		self.slam_gmapping_process_name = ""
+		
+		#Nombres de los procesos
+		#self.slam_gmapping_process_name = ""
+		self.slam_gmapping_process_name = "slam_gmapping.yaml"
 		self.amcl_process_name = ""
 		self.map_server_process_name = ""
 		self.move_base_process_name = ""
 		self.robot_ctrllr_process_name = ""
 		self.teleop_process_name = ""
-
+		
+		
+		#Objetos process
 		self.gmapping_process = None
 		self.amcl_process = None
 
+		#Objetos nodo
+		self.node_gmapping = None
+		self.node_amcl = None
 		self.launch = None
 
 		self.t_publish_state = threading.Timer(self.publish_state_timer, self.publishROSstate) #Each second publish state
-
-		self.manage_mapping_srv = rospy.Service('~start_mapping_srv', Trigger, self.startMappingServiceCb)
-		self.manage_navigation_srv = rospy.Service('~start_navigation_srv', Trigger, self.startNavigationServiceCb)
-
+		
+		#Objetos servicio
+		self.run_mapping_srv = None #rospy.Service('~start_mapping_srv', Trigger, self.startMappingServiceCb)
+		self.run_navigation_srv = None #rospy.Service('~start_navigation_srv', Trigger, self.startNavigationServiceCb)
+		self.stop_mapping_srv = None
+		self.stop_navigation_srv = None
 	#===================================================================================================================================
 	#===================================================================================================================================
 	def setup(self):
@@ -118,6 +139,8 @@ class MapNavManager:
 		'''
 		self.initialized = True
 
+		#TODO self.launch = roslaunch.scriptapi.ROSLaunch()
+		#TODO self.launch.start()
 		self.launch = roslaunch.scriptapi.ROSLaunch()
 		self.launch.start()
 
@@ -127,12 +150,14 @@ class MapNavManager:
 	#===================================================================================================================================
 	#===================================================================================================================================
 
-	def loadYaml(self,file,namespace):
+	def loadYaml(self,filename,namespace):
 		'''
 			Load all the parameters on the parameter server
 			@return: True if OK, False otherwise
 		'''
-		parameters = rosparam.load_file("file")
+		rospackage = rospkg.RosPack()
+		file_path = rospackage.get_path('map_nav_manager') + "/config/" + filename
+		parameters = rosparam.load_file(file_path)
 		rosparam.upload_params(namespace,parameters[0][0][namespace])
 
 	#===================================================================================================================================
@@ -151,10 +176,14 @@ class MapNavManager:
 		# topic_name, msg type, callback, queue_size
 		# self.topic_sub = rospy.Subscriber('topic_name', Int32, self.topicCb, queue_size = 10)
 		# Service Servers
+		self.run_mapping_srv = rospy.Service('~run_mapping_srv', Trigger, self.startMappingServiceCb)
+		self.run_navigation_srv = rospy.Service('~run_navigation_srv', Trigger, self.startNavigationServiceCb)
 
 		# Service Clients
 		# self.service_client = rospy.ServiceProxy('service_name', ServiceMsg)
 		# ret = self.service_client.call(ServiceMsg)
+		
+		
 
 		self.ros_initialized = True
 
@@ -175,6 +204,8 @@ class MapNavManager:
 			return -1
 		rospy.loginfo('%s::shutdown'%self.node_name_)
 
+		# TODO cerrar los procesos activos
+		
 		# Cancels current timers
 		self.t_publish_state.cancel()
 
@@ -195,7 +226,8 @@ class MapNavManager:
 		'''
 		if self.running or not self.ros_initialized:
 			return -1
-
+		
+		#TODO cerrar los procesos activos
 		# Performs ROS topics & services shutdown
 		self._state_publisher.unregister()
 
@@ -227,6 +259,7 @@ class MapNavManager:
 		self.rosSetup()
 
 		if self.running:
+			rospy.loginfo('%s::start: Already running' % self.node_name_)
 			return 0
 
 		self.running = True
@@ -349,23 +382,15 @@ class MapNavManager:
 		'''
 		#TODO
 
-		#if start_gmapping:
-		if not self.is_slam_gmapping:
-			gmapping_pkg = "gmapping"
-			gmapping_exe = "slam_gmapping"
-			gmapping_process_name = "slam_gmapping"
-			node_gmapping = roslaunch.core.Node(gmapping_pkg, gmapping_exe, name=gmapping_process_name)
-			self.gmapping_process = self.launch.launch(node_gmapping)
-			self.is_slam_gmapping = True
-			#print gmapping_process.is_alive()
-			#gmapping_process.stop()
-		if not self.is_amcl:
-			amcl_pkg = "amcl"
-			amcl_exe = "amcl"
-			amcl_process_name = "amcl"
-			node_amcl = roslaunch.core.Node(amcl_pkg, amcl_exe, amcl_process_name)
-			self.amcl_process = self.launch.launch(node_amcl)
-			self.is_amcl = True
+		if self.run_slam_gmapping:
+			self.loadYaml(self.slam_gmapping_process_name,"slam_gmapping")
+			self.startSlamGmappingNode()
+			self.switchToState('MAPPING_STATE')
+
+
+		elif self.is_amcl and self.is_move_base:
+			self.switchToState('NAVIGATION_STATE')
+
 		'''
 		rosbridge_pkg = "rosbridge_server"
 		rosbridge_exe = "rosbridge_websocket"
@@ -451,7 +476,6 @@ class MapNavManager:
 
 	#===================================================================================================================================
 	#===================================================================================================================================
-
 
 	def allState(self):
 		'''
@@ -543,7 +567,6 @@ class MapNavManager:
 	#===================================================================================================================================
 	#===================================================================================================================================
 
-
 	def startMappingServiceCb(self, req):
 		'''
 			ROS start mapping server
@@ -551,17 +574,53 @@ class MapNavManager:
 			@type req: std_srv/Empty
 		'''
 		'''EXPLANATION: Here I should put a mecanism to start all the mapping stuff and changes some flags'''
+		self.run_slam_gmapping = True
 		rospy.loginfo('called!')
+		return TriggerResponse(True, "Successfull!")
+		'''
 		if not self.is_slam_gmapping:
-			#Load slam_gmapping and params
+			gmapping_pkg = "gmapping"
+			gmapping_exe = "slam_gmapping"
+			gmapping_process_name = "slam_gmapping"
+			node_gmapping = roslaunch.core.Node(gmapping_pkg, gmapping_exe, name=gmapping_process_name)
+			self.gmapping_process = self.launch.launch(node_gmapping)
 			self.is_slam_gmapping = True
 			return TriggerResponse(True, "Successfull!")
 		else:
 			return TriggerResponse(False, "Mapping is already running")
+	
+		if not self.is_slam_gmapping:
+			#Load slam_gmapping and params
+			#self.is_slam_gmapping = True
+			self.start_slam_gmapping_node()
+		'''	
+		
 
+	# ===================================================================================================================================
+	# ===================================================================================================================================
 
+	def startSlamGmappingNode(self):
+		if not self.is_slam_gmapping:
+			gmapping_pkg = "gmapping"
+			gmapping_exe = "slam_gmapping"
+			gmapping_process_name = "slam_gmapping"
+			self.node_gmapping = roslaunch.core.Node(gmapping_pkg, gmapping_exe, name=gmapping_process_name)
+			self.gmapping_process = self.launch.launch(self.node_gmapping)
+			self.is_slam_gmapping = True
+		# print gmapping_process.is_alive()
+		# gmapping_process.stop()
 
+	# ===================================================================================================================================
+	# ===================================================================================================================================
 
+	def start_amcl_node(self):
+		if not self.is_amcl:
+			amcl_pkg = "amcl"
+			amcl_exe = "amcl"
+			amcl_process_name = "amcl"
+			node_amcl = roslaunch.core.Node(amcl_pkg, amcl_exe, amcl_process_name)
+			self.amcl_process = self.launch.launch(node_amcl)
+			self.is_amcl = True
 
 	#===================================================================================================================================
 	#===================================================================================================================================
