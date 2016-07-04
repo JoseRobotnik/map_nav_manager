@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Generaci&oacute;n de mapa</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/common.css" rel="stylesheet">
+    
+    <script type="text/javascript" src="js/three.js"></script>
+	<script type="text/javascript" src="js/ColladaLoader.js"></script>
+	<script type="text/javascript" src="js/STLLoader.js"></script>
+	<script type="text/javascript" src="js/ColladaLoader2.js"></script>
+	<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+	<script type="text/javascript" src="js/easeljs.min.js"></script>
+	<script type="text/javascript" src="js/ros3d.js"></script>
+	<script type="text/javascript" src="js/nav2d.js"></script>
+	<script type="text/javascript" src="js/roslib.js"></script>
+	<script type="text/javascript" src="js/ros2d.js"></script>
+	
+	<script type="text/javascript" src="js/mapping.js"></script>
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+	<div class="page-header">
+		<div class="logo">
+				<a href="http://www.robotnik.eu/"><img width="200" src="images/robotnik.png"></a>
+		</div>
+	</div>
+    
+	<div class="column">
+		<div class="col-lg-9 col-md-9">
+			<div class="panel panel-default">
+				<div class="panel-heading">Visualizaci&oacute;n Mapa 3D</div>
+				<div id="occupancygrid" class="panel-body"></div>
+			</div>
+		</div>
+	</div>
+	<div class="column">	
+		<div class="col-lg-3 col-md-3">
+			<div class="panel panel-default">
+				<div class="panel-heading">Panel de control</div>
+					<div class="panel-body">
+						 <table id="button_table" class="table">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                        	<button type="button" class="btn btn-success btn-lg" width="100" alt="" align="middle" onClick="startMapping()">
+  												<span class="glyphicon glyphicon-play" aria-hidden="true"></span> <br>Iniciar Mapa	
+											</button>
+                                    </tr>	
+                                    <tr>
+                                    	 <td>
+                                    	 	<label for="text">Nombre archivo: </label>
+                                    	 	<input type="text" id="filename"/>
+                                    	 </td>
+                                    </tr>
+									<tr>
+                                    	 <td>
+                                    	 	<button type="button" class="btn btn-warning btn-lg" width="100" alt="" align="middle" onClick="saveMap()">
+  												<span class="glyphicon glyphicon-save" aria-hidden="true"></span> <br>Salvar Mapa	
+											</button>
+                                    	 </td>
+									</tr>
+									<tr>
+                                        <td>
+                                        	<button type="button" class="btn btn-danger btn-lg" width="100" alt="" align="middle" onClick="stopMapping()">
+  												<span class="glyphicon glyphicon-stop" aria-hidden="true"></span> <br>Finalizar Mapa	
+											</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                        	<button type="button" class="btn btn-primary btn-lg" width="100" alt="" align="middle" onClick="goIndex()">
+  												<span class="glyphicon glyphicon-home" aria-hidden="true"></span> <br>Inicio
+											</button>
+                                        	<button type="button" class="btn btn-primary btn-lg" width="100" alt="" align="middle" onClick="goNavigation()">
+  												<span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span> <br>Navegaci&oacute;n	
+											</button>
+                                        </td>
+                                    </tr>	
+                                    	<!--
+										<table id="ros_control_panel" class="table">
+									          <tbody>
+									            <tr valign="top">
+									              <td colspan="3"><label id="cmdVelStatusMessage"></label><br><br>
+									                              <b><label id="navInstructions"></label></b>
+									              </td>
+									             </tr>
+									             <tr>
+									               <td colspan="3" style="text-align: center;">
+														<button type="button" class="btn btn-primary btn-lg" width="100" onTouchEnd="timedStopRobot();" onTouchStart="setSpeed('forward');clearTimedStop();" onClick="setSpeed('forward');" alt="" align="middle">
+  															<span class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span> <br>Adelante
+														</button>
+									                </td>
+									             </tr>
+									             <tr>
+									               <td width="33%" style="text-align: center;">
+									               	<button type="button" class="btn btn-primary btn-lg" width="100" onTouchEnd="timedStopRobot();" onTouchStart="setSpeed('left');clearTimedStop();" onClick="setSpeed('left');" alt="" align="middle">
+  														<span class="glyphicon glyphicon-triangle-left" aria-hidden="true"></span> <br>Izquierda
+													</button>
+									               </td>
+
+									               <td width="33%" style="text-align: center;">
+									               	<button type="button" class="btn btn-danger btn-lg" width="100" onClick="stopRobot('forward');" alt="" align="middle">
+  														<span class="glyphicon glyphicon-stop" aria-hidden="true"></span> <br>Parar Robot
+													</button>	
+
+									               <td width="33%" style="text-align: center;">
+									               	<button type="button" class="btn btn-primary btn-lg" width="100" onTouchEnd="timedStopRobot();" onTouchStart="setSpeed('right');clearTimedStop();" onClick="setSpeed('right');" alt="" align="middle">
+  														<span class="glyphicon glyphicon-triangle-right" aria-hidden="true"></span> <br>Derecha
+													</button>
+												</td>
+									             </tr>
+									             <tr>
+									               <td colspan="3" style="text-align: center;">
+									               	<button type="button" class="btn btn-primary btn-lg" width="100" onTouchEnd="timedStopRobot();" onTouchStart="setSpeed('backward');clearTimedStop();" onClick="setSpeed('backward');" alt="" align="middle">
+  															<span class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span> <br>Detrás
+														</button>
+													</td>
+									             </tr>
+									             <tr>
+									               <td align="right"><span style="font-size: 14pt;">Max Linear Spd:</span></td>
+									               <td><input type="range" id="maxLinearSpeed" min="0.01" max="0.5" step="0.01" value="0.2"
+									                    onChange="writeStatusMessage('maxLinearSpeedDisplay', this.value);"
+									                    onMouseUp="setMaxLinearSpeed(this.value);" onInput="maxLinearSpeedDisplay.value=this.value;"></td>
+									               <td><span style="font-weight: bold;"><output id="maxLinearSpeedDisplay" size="4"></output></span></td>
+									             </tr>
+									             <tr>
+									               <td align="right"><span style="font-size: 14pt;">Max Angular Spd:</span></td>
+									               <td><input type="range" id="maxAngularSpeed" min="0.01" max="2.0" step="0.01" value="1.0"
+									                    onChange="writeStatusMessage('maxAngularSpeedDisplay', this.value);"
+									                    onMouseUp="setMaxAngularSpeed(this.value);" onInput="maxAngularSpeedDisplay.value=this.value;"></td>
+									               <td><span style="font-weight: bold;"><output id="maxAngularSpeedDisplay" size="4"></output></span></td>
+									             </tr>
+									           </tbody>
+									         </table>
+									     -->
+                                    </tbody>
+                            </table>
+					</div>
+				</div>													
+			</div>
+		</div>
+
+	</div>
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/three.js"></script>
+	<script type="text/javascript" src="js/ColladaLoader.js"></script>
+	<script type="text/javascript" src="js/STLLoader.js"></script>
+	<script type="text/javascript" src="js/ColladaLoader2.js"></script>
+	<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+	<script type="text/javascript" src="js/easeljs.min.js"></script>
+	<script type="text/javascript" src="js/ros3d.js"></script>
+	<script type="text/javascript" src="js/nav2d.js"></script>
+	<script type="text/javascript" src="js/roslib.js"></script>
+	<script type="text/javascript" src="js/ros2d.js"></script>
+	
+	<script type="text/javascript" src="js/mapping.js"></script>
+    
+  </body>
+</html>
